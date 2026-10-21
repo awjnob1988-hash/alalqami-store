@@ -1,0 +1,391 @@
+{
+  "source": "https://miswag.com/merchant/alaalkmy",
+  "retrieved": "2026-10-21",
+  "verified_count": 20,
+  "notes": "Catalog compiled from the merchant listing and linked product pages. Prices can differ between list/detail, availability and rights to images require confirmation.",
+  "products": [
+    {
+      "id": "1756346673",
+      "name": "منظومة ماء C.C.K التايوانية الأصلية – 6 مراحل",
+      "brand": "C.C.K",
+      "price": 360000,
+      "category": "systems",
+      "tag": "أجهزة تحلية المياه",
+      "about": "نظام RO منزلي مزوّد بمضخة ومقياس ضغط وخزان، بتصفية متعددة المراحل.",
+      "details": "منظومة لتنقية المياه المنزلية بتقنية التناضح العكسي، تتضمن مراحل للرواسب والكربون وغشاء RO ومرشحات نهائية. تأتي مع مضخة وملحقات للتركيب.",
+      "images": [
+        "https://cdn.miswag.me/images/thumbs512/a283cbd0-3a52-4f35-aaf4-b401d8ce1059.png",
+        "https://cdn.miswag.me/images/thumbs256/a283cbd3-e766-4d0f-83e4-e336c258eb5c.png"
+      ],
+      "src": "https://miswag.com/products/1756346673",
+      "price_note": "قائمة التاجر: 300,000 د.ع؛ صفحة المنتج: 360,000 د.ع",
+      "features": [
+        "6 مراحل",
+        "تقنية RO",
+        "مضخة ومقياس ضغط"
+      ],
+      "art": "open",
+      "color": "#168cab"
+    },
+    {
+      "id": "1756120543",
+      "name": "مضخة C.C.K للأجهزة المنزلية 24 فولت",
+      "brand": "C.C.K",
+      "price": 40000,
+      "category": "spares",
+      "tag": "قطع الغيار",
+      "about": "مضخة تعزيز ضغط الماء للأنظمة المنزلية التي تعمل بالتناضح العكسي.",
+      "details": "مضخة Booster Pump تعمل بجهد DC 24V مخصصة لأجهزة RO المنزلية، وتُستخدم لرفع ضغط الماء قبل الممبرين. تأكد من توافقها مع جهازك قبل الطلب.",
+      "images": [
+        "https://cdn.miswag.me/images/thumbs512/9fc386b4-7868-4b5b-a77e-68186fee612d.jpg"
+      ],
+      "src": "https://miswag.com/products/1756120543",
+      "price_note": "قائمة التاجر: 35,000 د.ع؛ صفحة المنتج: 40,000 د.ع",
+      "features": [
+        "24V",
+        "Booster Pump",
+        "مناسبة لبعض أجهزة RO"
+      ],
+      "art": "open2",
+      "color": "#168cab"
+    },
+    {
+      "id": "1742899302",
+      "name": "خزان ماء لجهاز التحلية",
+      "brand": "عام",
+      "price": 20000,
+      "category": "spares",
+      "tag": "قطع الغيار",
+      "about": "خزان تخزين مياه يستخدم مع بعض أجهزة التحلية المنزلية.",
+      "details": "خزان مخصص لأنظمة تنقية المياه. السعة ومقاس الوصلات والتوافق مع الجهاز بحاجة إلى تأكيد من المجموعة قبل الشراء.",
+      "images": [],
+      "src": "https://miswag.com/products/1742899302",
+      "price_note": "",
+      "features": [],
+      "art": "open2",
+      "color": "#168cab"
+    },
+    {
+      "id": "1742899310",
+      "name": "فلتر المرحلة الرابعة – الصنف الأول",
+      "brand": "عام",
+      "price": 35000,
+      "category": "filters",
+      "tag": "شمعات وفلاتر",
+      "about": "فلتر للمرحلة الرابعة ضمن أجهزة تصفية المياه.",
+      "details": "قطعة خاصة بالمرحلة الرابعة معروضة كصنف مستقل على مسواگ. النوع والسعة والمقاس غير منشورة بصورة كافية؛ راجع رقم الموديل قبل تأكيد الطلب.",
+      "images": [],
+      "src": "https://miswag.com/products/1742899310",
+      "price_note": "",
+      "features": [],
+      "art": "open2",
+      "color": "#168cab"
+    },
+    {
+      "id": "1742899316",
+      "name": "فلتر المرحلة الرابعة – الصنف الثاني",
+      "brand": "عام",
+      "price": 25000,
+      "category": "filters",
+      "tag": "شمعات وفلاتر",
+      "about": "فلتر مرحلة رابعة بإدراج آخر وسعر مختلف.",
+      "details": "منتج منفصل عن فلتر المرحلة الرابعة الآخر على مسواگ؛ لا نفترض أنهما نفس المواصفات. يلزم تحديد نوع الممبرين والتوافق من الإدارة.",
+      "images": [],
+      "src": "https://miswag.com/products/1742899316",
+      "price_note": "",
+      "features": [],
+      "art": "open2",
+      "color": "#168cab"
+    },
+    {
+      "id": "1742899319",
+      "name": "سيت شمعات 3 مراحل",
+      "brand": "عام",
+      "price": 10000,
+      "category": "filters",
+      "tag": "شمعات وفلاتر",
+      "about": "طقم تبديل للفلاتر الأولية بثلاث مراحل.",
+      "details": "طقم صيانة أولي يتضمن ثلاث مراحل ترشيح بحسب إدراج البائع. المقاسات وتركيبة المواد تُراجع قبل الطلب.",
+      "images": [],
+      "src": "https://miswag.com/products/1742899319",
+      "price_note": "",
+      "features": [],
+      "art": "open2",
+      "color": "#168cab"
+    },
+    {
+      "id": "1742899320",
+      "name": "سيت شمعات RO – سبع مراحل",
+      "brand": "عام",
+      "price": 55000,
+      "category": "filters",
+      "tag": "شمعات وفلاتر",
+      "about": "طقم فلاتر متعدد المراحل لمنظومات RO.",
+      "details": "مجموعة تبديل من سبع مراحل لأجهزة التحلية. يُرجى التأكد من توافق مقاسات الشمعات والممبرين والمراحل الإضافية.",
+      "images": [],
+      "src": "https://miswag.com/products/1742899320",
+      "price_note": "",
+      "features": [],
+      "art": "open2",
+      "color": "#168cab"
+    },
+    {
+      "id": "1742909304",
+      "name": "شمعة قطنية للمرحلة الأولى – قطعة واحدة",
+      "brand": "عام",
+      "price": 1500,
+      "category": "filters",
+      "tag": "شمعات وفلاتر",
+      "about": "شمعة أولية تعمل على التقاط الرواسب والعوالق.",
+      "details": "فلتر قطني للمرحلة الأولى من جهاز التنقية. يُستخدم لترشيح العوالق مثل الرمل والصدأ؛ المقاس يُراجع مع الفني.",
+      "images": [],
+      "src": "https://miswag.com/products/1742909304",
+      "price_note": "",
+      "features": [],
+      "art": "open2",
+      "color": "#168cab"
+    },
+    {
+      "id": "1742909309",
+      "name": "شمعة قطنية للمرحلة الأولى – عبوة 5 قطع",
+      "brand": "عام",
+      "price": 7000,
+      "category": "filters",
+      "tag": "شمعات وفلاتر",
+      "about": "عبوة توفير تحتوي على خمس شمعات من المرحلة الأولى.",
+      "details": "مجموعة من خمس شمعات فلتر قطنية مخصصة للمرحلة الأولى. راجع أبعاد الشمعة ومقاس الحافظة قبل الشراء.",
+      "images": [],
+      "src": "https://miswag.com/products/1742909309",
+      "price_note": "",
+      "features": [],
+      "art": "open2",
+      "color": "#168cab"
+    },
+    {
+      "id": "1756120494",
+      "name": "سيت 3 مراحل أولية C.C.K الأصلي",
+      "brand": "C.C.K",
+      "price": 23000,
+      "category": "filters",
+      "tag": "شمعات وفلاتر",
+      "about": "طقم شمعات أولية لأجهزة C.C.K.",
+      "details": "طقم مخصص لتبديل المراحل الثلاث الأولى لبعض أنظمة C.C.K. يُنصح بتأكيد توافق موديل الجهاز قبل الشراء.",
+      "images": [],
+      "src": "https://miswag.com/products/1756120494",
+      "price_note": "قائمة التاجر: 20,000 د.ع؛ صفحة المنتج: 23,000 د.ع",
+      "features": [],
+      "art": "open2",
+      "color": "#168cab"
+    },
+    {
+      "id": "1756120534",
+      "name": "محول طاقة C.C.K بخرج 24V",
+      "brand": "C.C.K",
+      "price": 17000,
+      "category": "spares",
+      "tag": "قطع الغيار",
+      "about": "محول كهربائي لتشغيل بعض مضخات أجهزة RO.",
+      "details": "محول كهربائي بمدخل AC 220V 50/60Hz ومخرج DC 24V 1.2A وفق وصف صفحة المنتج؛ تأكد من توافق التوصيلة والتيار مع مضختك.",
+      "images": [
+        "https://cdn.miswag.me/images/thumbs512/9fc38e87-5b24-4562-91da-4ce0b98dd1f4.jpg"
+      ],
+      "src": "https://miswag.com/products/1756120534",
+      "price_note": "قائمة التاجر: 15,000 د.ع؛ صفحة المنتج: 17,000 د.ع",
+      "features": [
+        "DC 24V",
+        "1.2A",
+        "لأنظمة RO المتوافقة"
+      ],
+      "art": "open2",
+      "color": "#168cab"
+    },
+    {
+      "id": "1756166627",
+      "name": "فلتر مياه Pureritek بنظام RO",
+      "brand": "Pureritek",
+      "price": 195000,
+      "category": "systems",
+      "tag": "أجهزة تحلية المياه",
+      "about": "جهاز تنقية مياه منزلي يعمل بالتناضح العكسي.",
+      "details": "فلتر مياه من Pureritek منشور ضمن منتجات العلقمي على مسواگ. عدد المراحل والمرفقات والضمان تحتاج تأكيداً حسب الموديل.",
+      "images": [
+        "https://cdn.miswag.me/images/images/a0ab5e17-9ac3-439f-8013-7fce130fdc0d.png"
+      ],
+      "src": "https://miswag.com/products/1756166627",
+      "price_note": "",
+      "features": [],
+      "art": "open",
+      "color": "#168cab"
+    },
+    {
+      "id": "1756469398",
+      "name": "منظومة تحلية مياه C.C.K المنزلية – 75 غالون",
+      "brand": "C.C.K",
+      "price": 340000,
+      "category": "systems",
+      "tag": "أجهزة تحلية المياه",
+      "about": "منظومة RO منزلية تايوانية بسعة اسمية معلنة 75 غالون.",
+      "details": "جهاز تصفية متعدد المراحل يضم مرشحات للرواسب والكربون وغشاء RO ومضخة ضغط. تتضمن المنظومة مراحل نهائية لتحسين الطعم.",
+      "images": [
+        "https://cdn.miswag.me/images/thumbs512/0K0B2VKTB024G36EZF7W0E55PJ.jpg",
+        "https://cdn.miswag.me/images/thumbs256/0YRB043NQBX9VC3JB3NR1XEFCW.jpg"
+      ],
+      "src": "https://miswag.com/products/1756469398",
+      "price_note": "",
+      "features": [
+        "75 غالون حسب الإدراج",
+        "RO",
+        "مضخة ضغط"
+      ],
+      "art": "open",
+      "color": "#168cab"
+    },
+    {
+      "id": "1756469354",
+      "name": "حافظة فلتر مفردة شفافة SUPER SJM – 10 إنش",
+      "brand": "SUPER SJM",
+      "price": 30000,
+      "category": "spares",
+      "tag": "قطع الغيار",
+      "about": "حافظة شفافة لفلتر مياه أولي مع ملحقات تركيب.",
+      "details": "هاوسينغ شفاف مقاس 10 إنش يسمح بمراقبة حالة شمعة الرواسب بصرياً. تتضمن الحزمة بحسب صفحة المنتج شمعة أولية وملحقات تثبيت.",
+      "images": [
+        "https://cdn.miswag.me/images/thumbs512/01M4C88XJSPREKQCP5MCEW52AC.jpg",
+        "https://cdn.miswag.me/images/thumbs256/01M4C89JAFHQQTWVT6M38TJ2ZM.jpg"
+      ],
+      "src": "https://miswag.com/products/1756469354",
+      "price_note": "",
+      "features": [
+        "10 إنش",
+        "حافظة شفافة",
+        "ملحقات تثبيت"
+      ],
+      "art": "open2",
+      "color": "#168cab"
+    },
+    {
+      "id": "1756469279",
+      "name": "منظومة PurePro – سبع مراحل مع خزان 3.2 غالون",
+      "brand": "PurePro",
+      "price": 138000,
+      "category": "systems",
+      "tag": "أجهزة تحلية المياه",
+      "about": "نظام RO مكون من 7 مراحل مع خزان تخزين 3.2 غالون.",
+      "details": "منظومة تنقية منزلية بمراحل أولية ومرحلة التناضح العكسي والفلاتر النهائية، مع خزان سعة 3.2 غالون وحنفية وملحقات تركيب بحسب الإدراج.",
+      "images": [
+        "https://cdn.miswag.me/images/thumbs512/01M4C73ZEGDB49V01WHFMG7XKC.jpg",
+        "https://cdn.miswag.me/images/thumbs256/01M4C748HYE5ZFGWTRGGATCEAP.jpg"
+      ],
+      "src": "https://miswag.com/products/1756469279",
+      "price_note": "",
+      "features": [
+        "7 مراحل",
+        "خزان 3.2 غالون",
+        "75 GPD حسب الإدراج"
+      ],
+      "art": "open",
+      "color": "#168cab"
+    },
+    {
+      "id": "1756468989",
+      "name": "منظومة SJM الذكية بتدفق مباشر – بدون خزان",
+      "brand": "SJM",
+      "price": 315000,
+      "category": "systems",
+      "tag": "أجهزة تحلية المياه",
+      "about": "فلتر ذكي يعمل بالتدفق المباشر ويُركّب دون خزان تخزين.",
+      "details": "منظومة تناضح عكسي بتدفق مباشر مع شاشة LED لمراقبة الحالة التشغيلية، مخصصة لتوفير مساحة تحت المجلى. وردت حنفية ستانلس 304 ضمن الوصف.",
+      "images": [
+        "https://cdn.miswag.me/images/thumbs512/01M4C5GMWJBZJ34D1E8CEG51CM.jpg",
+        "https://cdn.miswag.me/images/thumbs256/01M4C5HDMBS4PBBV8CYVZD3XJA.jpg"
+      ],
+      "src": "https://miswag.com/products/1756468989",
+      "price_note": "",
+      "features": [
+        "بدون خزان",
+        "شاشة LED",
+        "تدفق مباشر"
+      ],
+      "art": "open",
+      "color": "#168cab"
+    },
+    {
+      "id": "1756468479",
+      "name": "براد وموزع مياه ذكي كهرمانة مع تنقية RO",
+      "brand": "Kahramana",
+      "price": 485000,
+      "category": "dispensers",
+      "tag": "برادات وموزعات",
+      "about": "براد مكتبي مع منظومة تنقية داخلية ومياه ساخنة وباردة.",
+      "details": "موديل Kahramana KM-8009 يجمع موزع مياه مع تنقية RO داخلية، وشاشة إلكترونية ومخارج ماء بارد وساخن، مع قدرة إجمالية مذكورة 420 واط.",
+      "images": [
+        "https://cdn.miswag.me/images/thumbs512/01M4AQST9JZ2VP9A5MV99HYSS2.jpg",
+        "https://cdn.miswag.me/images/thumbs256/01M4AQTJ7MRAMF3G9Y5PMGHCT2.jpg"
+      ],
+      "src": "https://miswag.com/products/1756468479",
+      "price_note": "",
+      "features": [
+        "RO",
+        "مياه ساخنة وباردة",
+        "420 واط حسب الإدراج"
+      ],
+      "art": "open",
+      "color": "#168cab"
+    },
+    {
+      "id": "1756464025",
+      "name": "فلتر أكوا جو – سبع مراحل RO",
+      "brand": "Aqua Jo",
+      "price": 145000,
+      "category": "systems",
+      "tag": "أجهزة تحلية المياه",
+      "about": "منظومة تصفية وتحلية مياه منزلية بسبع مراحل.",
+      "details": "جهاز أكوا جو 7 مراحل بتقنية التناضح العكسي كما ورد في إدراج العلقمي على مسواگ. المواصفات التفصيلية والمرفقات بانتظار تأكيد.",
+      "images": [],
+      "src": "https://miswag.com/products/1756464025",
+      "price_note": "",
+      "features": [],
+      "art": "open",
+      "color": "#168cab"
+    },
+    {
+      "id": "1756463501",
+      "name": "منظومة Tecomen – سبع مراحل RO",
+      "brand": "Tecomen",
+      "price": 235000,
+      "category": "systems",
+      "tag": "أجهزة تحلية المياه",
+      "about": "جهاز تنقية منزلي بسبع مراحل، مع مضخة ومقياس ضغط.",
+      "details": "منظومة تناضح عكسي بسبع مراحل، تتضمن مرشحات للرواسب والكربون وممبرين، مع مضخة وخزان وساعة ضغط وفق تفاصيل المنتج المنشورة.",
+      "images": [
+        "https://cdn.miswag.me/images/thumbs512/01M45M0Y4NWPPXYQ2PEBCR5DEB.jpg",
+        "https://cdn.miswag.me/images/thumbs256/01M45M1X27410JB99HKFKYR4FS.jpg"
+      ],
+      "src": "https://miswag.com/products/1756463501",
+      "price_note": "",
+      "features": [
+        "7 مراحل",
+        "تقنية RO",
+        "خزان ومضخة"
+      ],
+      "art": "open",
+      "color": "#168cab"
+    },
+    {
+      "id": "1756120526",
+      "name": "جهاز فلتر ماء مغلق C.C.K – QM72",
+      "brand": "C.C.K",
+      "price": 395000,
+      "category": "systems",
+      "tag": "أجهزة تحلية المياه",
+      "about": "منظومة تحلية منزلية بتصميم مغلق.",
+      "details": "جهاز فلتر ماء من C.C.K موديل QM72 وفق إدراج العلامة التجارية على مسواگ؛ التفاصيل الدقيقة والملحقات تُراجع قبل الطلب.",
+      "images": [],
+      "src": "https://miswag.com/products/1756120526",
+      "price_note": "",
+      "features": [],
+      "art": "open",
+      "color": "#168cab"
+    }
+  ]
+}
