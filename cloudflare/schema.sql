@@ -1,9 +1,3 @@
--- table _cf_KV
-CREATE TABLE _cf_KV (
-        key TEXT PRIMARY KEY,
-        value BLOB
-      ) WITHOUT ROWID;
-
 -- table auth_attempts
 CREATE TABLE auth_attempts(ip TEXT PRIMARY KEY, failures INTEGER NOT NULL DEFAULT 0, updated_at INTEGER NOT NULL DEFAULT 0);
 
