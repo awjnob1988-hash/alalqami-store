@@ -444,7 +444,39 @@ document.addEventListener('click',e=>{const t=e.target.closest('button,a,[data-l
 document.addEventListener('input',e=>{if(e.target.id==='shop-search'){state.shopSearch=e.target.value;refreshShop()}if(e.target.id==='price-range'){state.maxPrice=Number(e.target.value);document.querySelector('#max-price-label').textContent=formatPrice(state.maxPrice);refreshShop()}});
 document.addEventListener('change',e=>{if(e.target.name==='brand'){state.shopFilter=e.target.value;refreshShop()}if(e.target.id==='sort'){state.sort=e.target.value;refreshShop()}if(e.target.id==='province'){state.province=e.target.value;state.installation=false;document.querySelector('#installation-ui').innerHTML=installationUI();document.querySelector('#installation-cost').textContent='غير مطلوبة'}if(e.target.id==='wants-install'){state.installation=e.target.checked;document.querySelector('#installation-cost').textContent=state.installation?'بانتظار التحديد':'غير مطلوبة'}});
 function refreshShop(){const mode=document.querySelector('.shop-layout')?.dataset.mode||'all';const visibleByCategory=p=>mode==='all'||(mode==='spares'?['spares','filters'].includes(p.category):p.category===mode);let arr=products.filter(p=>visibleByCategory(p)&&(state.shopFilter==='all'||p.brand===state.shopFilter)&&(!state.shopSearch||`${p.name} ${p.brand} ${p.about}`.toLowerCase().includes(state.shopSearch.toLowerCase()))&&p.price<=state.maxPrice);if(state.sort==='low')arr.sort((a,b)=>a.price-b.price);if(state.sort==='high')arr.sort((a,b)=>b.price-a.price);const result=document.querySelector('#shop-results');if(result)result.innerHTML=arr.map(productCard).join('')||'<p class="muted">ماكو منتجات تطابق البحث.</p>';const header=document.querySelector('.shop-header .muted');if(header)header.textContent=arr.length+' منتجات';loadProductPhotos()}
-document.addEventListener('submit',async e=>{if(e.target.id==='checkout-form'){e.preventDefault();const form=e.target,get=id=>form.querySelector('#'+id)?.value.trim()||'';if(!form.reportValidity())return;const btn=form.querySelector('button[type="submit"]'),coupon=get('coupon-code').toUpperCase(),address=[get('district'),get('address'),state.province==='كربلاء'&&state.installation?'تركيب مطلوب داخل كربلاء':'',get('notes')?('ملاحظات: '+get('notes')):''].filter(Boolean).join(' | ').slice(0,340),payload={customer_name:get('fullname'),phone:get('phone'),province:get('province'),address,items:cartItems().map(({p,q})=>({id:p.id,qty:q})),coupon,idempotency_key:crypto.randomUUID()};const pending=window.open('about:blank','_blank');if(btn)btn.disabled=true;try{const r=await alqamiFetch('/api/order',{method:'POST',body:JSON.stringify(payload)}),wa=r.whatsapp_url;if(!wa)throw Error('تعذر تجهيز رسالة واتساب');if(pending)pending.location.href=wa;else{const a=document.createElement('a');a.href=wa;a.target='_blank';a.rel='noopener noreferrer';a.click()}latestSuccess={id:r.order_id,name:payload.customer_name,phone:payload.phone,province:payload.province,subtotal:r.total,whatsapp:wa};state.cart={};persist();go('/success');toast('تم احتساب الطلب والكوبون؛ اضغط إرسال داخل واتساب لإكماله')}catch(err){if(pending)pending.close();toast(err.message)}finally{if(btn)btn.disabled=false}}if(e.target.id==='service-form'){e.preventDefault();if(!e.target.reportValidity())return;const obj={name:document.querySelector('#sname').value,phone:document.querySelector('#sphone').value,type:document.querySelector('#stype').value,date:document.querySelector('#sdate').value,address:document.querySelector('#saddress').value,notes:document.querySelector('#snotes').value};const message=['مرحباً مجموعة العلقمي، أريد طلب خدمة فنية داخل كربلاء:',`الاسم: ${obj.name}`,`الهاتف: ${obj.phone}`,`الخدمة: ${obj.type}`,`الموعد المفضل: ${obj.date||'بالاتفاق'}`,`العنوان: ${obj.address}`,`الملاحظات: ${obj.notes||'لا يوجد'}`].join('\n');window.open('https://wa.me/9647706050050?text='+encodeURIComponent(message),'_blank','noopener,noreferrer');toast('الرجاء الضغط على إرسال داخل واتساب لإكمال طلب الخدمة')}});
+let checkoutAttempt=null;
+async function checkoutRequestKey(payload){
+ const bytes=new TextEncoder().encode(JSON.stringify(payload));
+ const fingerprint=Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',bytes)),b=>b.toString(16).padStart(2,'0')).join('');
+ let saved=checkoutAttempt;
+ try{saved=JSON.parse(sessionStorage.getItem('alqami-checkout-attempt'))||saved}catch{}
+ if(!saved||saved.fingerprint!==fingerprint)saved={fingerprint,key:crypto.randomUUID()};
+ checkoutAttempt=saved;
+ try{sessionStorage.setItem('alqami-checkout-attempt',JSON.stringify(saved))}catch{}
+ return saved.key;
+}
+function clearCheckoutAttempt(){checkoutAttempt=null;try{sessionStorage.removeItem('alqami-checkout-attempt')}catch{}}
+async function submitCheckout(form){
+ if(form.dataset.submitting==='true'||!form.reportValidity())return;
+ form.dataset.submitting='true';
+ const get=id=>form.querySelector('#'+id)?.value.trim()||'',btn=form.querySelector('button[type="submit"]');
+ const payload={customer_name:get('fullname'),phone:get('phone'),province:get('province'),address:[get('district'),get('address'),state.province==='كربلاء'&&state.installation?'تركيب مطلوب داخل كربلاء':'',get('notes')?('ملاحظات: '+get('notes')):''].filter(Boolean).join(' | ').slice(0,340),items:cartItems().map(({p,q})=>({id:p.id,qty:q})),coupon:get('coupon-code').toUpperCase()};
+ let pending=null;
+ try{pending=window.open('about:blank','_blank')}catch{}
+ if(btn)btn.disabled=true;
+ try{
+  payload.idempotency_key=await checkoutRequestKey(payload);
+  const r=await alqamiFetch('/api/order',{method:'POST',body:JSON.stringify(payload)});
+  const wa=r.whatsapp_url;
+  if(typeof wa!=='string'||!/^https:\/\/wa\.me\/[1-9]\d{7,14}\?text=/.test(wa))throw Error('تعذر فتح رابط واتساب. أعد المحاولة لاسترجاع نفس الطلب بدون تكراره.');
+  latestSuccess={id:r.order_id,name:payload.customer_name,phone:payload.phone,province:payload.province,subtotal:r.total,whatsapp:wa};
+  state.cart={};persist();clearCheckoutAttempt();go('/success');
+  if(pending&&!pending.closed){try{pending.opener=null;pending.location.href=wa}catch{pending.close();toast('رسالة الطلب جاهزة؛ اضغط فتح واتساب لإرسالها.')}}
+  else{toast('رسالة الطلب جاهزة؛ اضغط فتح واتساب لإرسالها.');window.location.assign(wa)}
+ }catch(err){if(pending&&!pending.closed)pending.close();toast(err.message)}
+ finally{form.dataset.submitting='false';if(btn)btn.disabled=false}
+}
+document.addEventListener('submit',async e=>{if(e.target.id==='checkout-form'){e.preventDefault();await submitCheckout(e.target)}if(e.target.id==='service-form'){e.preventDefault();if(!e.target.reportValidity())return;const obj={name:document.querySelector('#sname').value,phone:document.querySelector('#sphone').value,type:document.querySelector('#stype').value,date:document.querySelector('#sdate').value,address:document.querySelector('#saddress').value,notes:document.querySelector('#snotes').value};const message=['مرحباً مجموعة العلقمي، أريد طلب خدمة فنية داخل كربلاء:',`الاسم: ${obj.name}`,`الهاتف: ${obj.phone}`,`الخدمة: ${obj.type}`,`الموعد المفضل: ${obj.date||'بالاتفاق'}`,`العنوان: ${obj.address}`,`الملاحظات: ${obj.notes||'لا يوجد'}`].join('\n');window.open('https://wa.me/9647706050050?text='+encodeURIComponent(message),'_blank','noopener,noreferrer');toast('الرجاء الضغط على إرسال داخل واتساب لإكمال طلب الخدمة')}});
 
 let heroMotionCleanup=null;
 function initHeroMotion(){
