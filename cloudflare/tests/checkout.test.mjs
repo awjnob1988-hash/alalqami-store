@@ -5,11 +5,14 @@ import vm from 'node:vm';
 import { webcrypto } from 'node:crypto';
 import { Miniflare, convertV4MiniflareOptions } from 'miniflare';
 import { JSDOM } from 'jsdom';
+import {reportRange} from '../reporting.mjs';
 
 const origin = 'https://store.local';
 const fixture = await readFile(new URL('./schema-v2.sql', import.meta.url), 'utf8');
 const migration = await readFile(new URL('../migrations/0001_checkout_recovery.sql', import.meta.url), 'utf8');
 const deliveryMigration = await readFile(new URL('../migrations/0002_delivery_fee.sql', import.meta.url), 'utf8');
+const reportsMigration = await readFile(new URL('../migrations/0003_reports_and_invoice_archive.sql', import.meta.url), 'utf8');
+const reportingSource = await readFile(new URL('../reporting.mjs',import.meta.url),'utf8');
 const source = await readFile(new URL('../worker.mjs', import.meta.url), 'utf8');
 const invoiceBundle = await readFile(new URL('../invoice/invoice.bundle.txt', import.meta.url), 'utf8');
 const storefront = await readFile(new URL('../../index.html', import.meta.url), 'utf8');
@@ -26,7 +29,7 @@ const payload = (extra = {}) => ({
 
 async function setup(bindings = {}) {
   const mf = new Miniflare(convertV4MiniflareOptions({
-    modules: [{type:'ESModule',path:new URL('../worker.mjs',import.meta.url).pathname,contents:source},{type:'Text',path:new URL('../invoice/invoice.bundle.txt',import.meta.url).pathname,contents:invoiceBundle}], compatibilityDate: '2026-10-25',
+    modules: [{type:'ESModule',path:new URL('../worker.mjs',import.meta.url).pathname,contents:source},{type:'ESModule',path:new URL('../reporting.mjs',import.meta.url).pathname,contents:reportingSource},{type:'Text',path:new URL('../invoice/invoice.bundle.txt',import.meta.url).pathname,contents:invoiceBundle}], compatibilityDate: '2026-10-25',
     d1Databases: ['DB'], bindings: { AUTH_KEY: 'local-test-signing-key', ADMIN_PASSWORD: 'local-test-password', ...bindings },
   }));
   try {
@@ -34,6 +37,7 @@ async function setup(bindings = {}) {
   await db.batch(fixtureStatements.map(s => db.prepare(s)));
   await db.batch(sqlStatements(migration).map(s => db.prepare(s)));
   await db.batch(sqlStatements(deliveryMigration).map(s => db.prepare(s)));
+  await db.batch(sqlStatements(reportsMigration).map(s => db.prepare(s)));
   async function request(path, method = 'GET', body, cookie) {
     const r = await mf.dispatchFetch(origin + path, {
       method,
@@ -245,6 +249,73 @@ test('checkout and coupon regression tests with local Workers/D1', async t => {
     const invoice=await app.admin('/orders/'+placed.json.order_id+'/invoice');
     assert.equal(invoice.json.order.total,10000);
   });
+
+  await t.test('rejected orders are distinct from cancelled and release coupon use once',async()=>{
+    await app.reset();await app.coupon('REJ1',{max_uses:1});
+    const placed=await app.request('/api/order','POST',payload({coupon:'REJ1'}));
+    assert.equal((await app.admin('/orders/'+placed.json.order_id,'PATCH',{status:'rejected'})).status,200);
+    assert.equal((await app.admin('/orders/'+placed.json.order_id,'PATCH',{status:'rejected'})).status,200);
+    assert.equal((await app.db.prepare("SELECT uses FROM coupons WHERE code='REJ1'").first()).uses,0);
+    const view=(await app.admin('/state')).json.orders[0];assert.equal(view.status,'rejected');
+    assert.equal((await app.admin('/orders/'+placed.json.order_id+'/invoice')).json.order.status,'rejected');
+    assert.equal((await app.admin('/orders/'+placed.json.order_id,'PATCH',{status:'fulfilled'})).status,400);
+  });
+
+  async function reportOrders(rows){
+    await app.reset();
+    await app.db.batch(rows.map((o,i)=>app.db.prepare('INSERT INTO orders(id,idempotency_key,customer_name,phone,province,address,items_json,subtotal,total,delivery_fee,status,cancel_reason,created_at) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)').bind('report-'+i,'report-key-'+i,'عميل محلي','07700000000','بغداد','عنوان تجريبي','[]',10000,16000,6000,o.status||'fulfilled',o.reason||'',o.at)));
+  }
+  await t.test('monthly reports use Baghdad boundaries and count only completed order values',async()=>{
+    await reportOrders([
+      {at:'2026-01-31 20:59:59'},
+      {at:'2026-01-31 21:00:00'},
+      {at:'2026-02-28 20:59:59'},
+      {at:'2026-02-28 21:00:00'},
+      {at:'2026-02-05 10:00:00',status:'new'},
+      {at:'2026-02-06 10:00:00',status:'confirmed'},
+      {at:'2026-02-07 10:00:00',status:'cancelled',reason:'cancelled'},
+      {at:'2026-02-08 10:00:00',status:'cancelled',reason:'rejected'},
+    ]);
+    const path='/reports?from=2026-02-01&to=2026-02-28&group=month';
+    assert.equal((await app.request('/api/admin'+path)).status,401);
+    const r=await app.admin(path);assert.equal(r.status,200);const {summary:s,buckets}=r.json.report;
+    assert.equal(s.total_orders,6);assert.equal(s.received,2);assert.equal(s.pending,1);assert.equal(s.confirmed,1);assert.equal(s.cancelled,1);assert.equal(s.rejected,1);
+    assert.equal(s.sales_total,32000);assert.equal(s.delivery,12000);assert.equal(s.net_products,20000);
+    assert.equal(buckets.length,1);assert.equal(buckets[0].period,'2026-02');
+  });
+  await t.test('weekly grouping starts Saturday and aggregates all records beyond the latest 100',async()=>{
+    await reportOrders(Array.from({length:132},(_,i)=>({at:i===0?'2026-10-23 20:59:59':'2026-10-23 21:00:00'})));
+    const r=await app.admin('/reports?from=2026-10-01&to=2026-10-31&group=week');
+    assert.equal(r.json.report.summary.total_orders,132);assert.equal(r.json.report.summary.sales_total,132*16000);
+    assert.deepEqual(r.json.report.buckets.map(x=>[x.period,x.total_orders]),[['2026-10-17',1],['2026-10-24',131]]);
+    assert.equal((await app.admin('/state')).json.orders.length,100);
+  });
+  await t.test('invoice archive is reversible, paginated and never changes report totals',async()=>{
+    await reportOrders(Array.from({length:32},(_,i)=>({at:'2026-10-24 10:'+String(i).padStart(2,'0')+':00'})));
+    const filters='from=2026-10-01&to=2026-10-31&group=day';
+    const before=(await app.admin('/reports?'+filters)).json.report.summary;
+    const first=(await app.admin('/invoices?'+filters)).json;assert.equal(first.total,32);assert.equal(first.invoices.length,25);
+    const second=(await app.admin('/invoices?'+filters+'&page=2')).json;assert.equal(second.invoices.length,7);
+    const id=first.invoices[0].id;
+    assert.equal((await app.request('/api/admin/orders/'+id+'/invoice-archive','PATCH',{archived:true})).status,401);
+    assert.equal((await app.admin('/orders/'+id+'/invoice-archive','PATCH',{archived:'yes'})).status,400);
+    assert.equal((await app.admin('/orders/'+id+'/invoice-archive','PATCH',{archived:true})).status,200);
+    assert.equal((await app.admin('/invoices?'+filters)).json.total,31);
+    const archived=(await app.admin('/invoices?'+filters+'&archive=archived')).json;
+    assert.equal(archived.total,1);assert.equal(archived.invoices[0].id,id);
+    assert.deepEqual((await app.admin('/reports?'+filters)).json.report.summary,before);
+    assert.equal((await app.admin('/orders/'+id+'/invoice')).status,200);
+    assert.equal((await app.admin('/orders/'+id+'/invoice-archive','PATCH',{archived:false})).status,200);
+    assert.equal((await app.admin('/invoices?'+filters)).json.total,32);
+    assert.equal((await app.db.prepare('SELECT COUNT(*) AS n FROM orders').first()).n,32);
+  });
+  await t.test('empty reports return zeros and malformed ranges are rejected',async()=>{
+    await app.reset();const r=await app.admin('/reports?from=2026-01-01&to=2026-12-31&group=year');
+    assert.equal(r.json.report.summary.total_orders,0);assert.equal(r.json.report.summary.sales_total,0);assert.deepEqual(r.json.report.buckets,[]);
+    assert.equal((await app.admin('/reports?from=2026-02-29&to=2026-03-01')).status,400);
+    assert.equal((await app.admin('/reports?from=2026-03-02&to=2026-03-01')).status,400);
+    assert.equal((await app.admin('/reports?from=2026-01-01&to=2026-03-01&group=bad')).status,400);
+  });
 });
 
 test('invalid merchant WhatsApp configuration never saves an order', async t => {
@@ -287,7 +358,49 @@ test('admin dates, deletion cancel and pending order labels', async () => {
   await deleteProduct.onclick();
   assert.equal(calls.filter(x=>x.options?.method==='DELETE').length,0);
   assert.equal(w.document.querySelector('.top a').href, 'https://alalqami.pages.dev/');
+  w.Date.now=()=>Date.parse('2026-10-23T22:00:00Z');
+  assert.equal(evaluate('baghdadToday()'),'2026-10-24');
+  assert.equal(evaluate("JSON.stringify(reportPreset('week'))"),JSON.stringify({from:'2026-10-24',to:'2026-10-30',group:'day'}));
+  assert.equal(evaluate("reportPreset('year').group"),'month');
+  assert.ok(w.document.querySelector('[data-tab="reports"]'));
   dom.window.close();
+});
+
+test('report range uses explicit UTC bounds, valid leap dates and safe grouping',()=>{
+ const r=reportRange(new URLSearchParams({from:'2024-02-29',to:'2024-02-29',group:'day'}));
+ assert.equal(r.startUTC,'2024-02-28 21:00:00');assert.equal(r.endUTC,'2024-02-29 21:00:00');
+ assert.throws(()=>reportRange(new URLSearchParams({from:'2026-02-30',to:'2026-03-01'})),/التاريخ/);
+ assert.throws(()=>reportRange(new URLSearchParams({from:'2000-01-01',to:'2026-01-01'})),/عشر سنوات/);
+});
+
+test('reports UI shows server aggregates, exports them and archives without changing sales',async()=>{
+ const dom=new JSDOM(adminHTML,{url:origin,runScripts:'outside-only'}),w=dom.window;
+ const id='11111111-2222-4333-8444-555555555555';
+ const summary={total_orders:1,received:1,rejected:0,cancelled:0,pending:0,confirmed:0,gross_products:10000,discounts:0,delivery:6000,net_products:10000,sales_total:16000};
+ const report={range:{from:'2026-10-01',to:'2026-10-31',group:'day'},summary,buckets:[{...summary,period:'2026-10-25'}]};
+ let archived=false,archiveWrites=0,exported;
+ w.fetch=async(path,opt)=>{
+  let data;
+  if(path==='/api/admin/state')data={products:[],coupons:[],orders:[{id,status:'fulfilled',invoice_archived:0}],site:{}};
+  else if(path.startsWith('/api/admin/reports?'))data={report};
+  else if(path.startsWith('/api/admin/invoices?'))data={invoices:archived?[]:[{id,customer_name:'عميل محلي',status:'fulfilled',invoice_date:'2026-10-25',total:16000,invoice_archived:0}],total:archived?0:1,page:1,page_size:25};
+  else if(path.endsWith('/invoice-archive')){archiveWrites++;archived=JSON.parse(opt.body).archived;data={ok:true}}
+  else throw Error('Unexpected request '+path);
+  return {ok:true,json:async()=>data};
+ };
+ w.AlqamiInvoice={downloadReport:r=>{exported=r}};
+ const context=dom.getInternalVMContext();vm.runInContext(w.document.querySelector('script:not([src])').textContent,context);
+ await new Promise(r=>setImmediate(r));vm.runInContext("state.tab='reports';render()",context);
+ for(let i=0;i<3;i++)await new Promise(r=>setImmediate(r));
+ assert.match(w.document.querySelector('#reportResults').textContent,/16,000 د.ع/);
+ assert.equal(w.document.querySelector('#exportReport').disabled,false);
+ w.document.querySelector('#exportReport').onclick();assert.equal(exported.summary.sales_total,16000);
+ await w.document.querySelector('[data-archive-invoice]').onclick();
+ assert.equal(archiveWrites,1);assert.match(w.document.querySelector('#invoiceResults').textContent,/لا توجد فواتير/);
+ assert.match(w.document.querySelector('#reportResults').textContent,/16,000 د.ع/);
+ w.document.querySelector('#reportForm [name=from]').dispatchEvent(new w.Event('input',{bubbles:true}));
+ assert.equal(w.document.querySelector('#exportReport').disabled,true);
+ dom.window.close();
 });
 
 test('storefront retries a lost order response with the same key and keeps a recovery link', async t => {

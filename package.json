@@ -3,10 +3,11 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "test": "npm run build:invoice && node --test cloudflare/tests/*.test.mjs",
+    "test": "npm run build:admin && npm run build:invoice && node --test cloudflare/tests/*.test.mjs",
     "build": "node cloudflare/build-pages.cjs",
-    "check:worker": "npm run build:invoice && wrangler deploy --config cloudflare/wrangler.jsonc --dry-run --outdir ../dist-worker",
-    "build:invoice": "node cloudflare/invoice/build.cjs"
+    "check:worker": "npm run build:admin && npm run build:invoice && wrangler deploy --config cloudflare/wrangler.jsonc --dry-run --outdir ../dist-worker",
+    "build:invoice": "node cloudflare/invoice/build.cjs",
+    "build:admin": "node cloudflare/build-admin.cjs"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "5.20261025.1",
