@@ -9,7 +9,9 @@ import { JSDOM } from 'jsdom';
 const origin = 'https://store.local';
 const fixture = await readFile(new URL('./schema-v2.sql', import.meta.url), 'utf8');
 const migration = await readFile(new URL('../migrations/0001_checkout_recovery.sql', import.meta.url), 'utf8');
+const deliveryMigration = await readFile(new URL('../migrations/0002_delivery_fee.sql', import.meta.url), 'utf8');
 const source = await readFile(new URL('../worker.mjs', import.meta.url), 'utf8');
+const invoiceBundle = await readFile(new URL('../invoice/invoice.bundle.txt', import.meta.url), 'utf8');
 const storefront = await readFile(new URL('../../index.html', import.meta.url), 'utf8');
 const adminHTML = JSON.parse(source.split('\n')[0].slice('const ADMIN_HTML = '.length).replace(/;$/, ''));
 
@@ -24,13 +26,14 @@ const payload = (extra = {}) => ({
 
 async function setup(bindings = {}) {
   const mf = new Miniflare(convertV4MiniflareOptions({
-    modules: true, script: source, compatibilityDate: '2026-10-25',
+    modules: [{type:'ESModule',path:new URL('../worker.mjs',import.meta.url).pathname,contents:source},{type:'Text',path:new URL('../invoice/invoice.bundle.txt',import.meta.url).pathname,contents:invoiceBundle}], compatibilityDate: '2026-10-25',
     d1Databases: ['DB'], bindings: { AUTH_KEY: 'local-test-signing-key', ADMIN_PASSWORD: 'local-test-password', ...bindings },
   }));
   try {
   const db = await mf.getD1Database('DB');
   await db.batch(fixtureStatements.map(s => db.prepare(s)));
   await db.batch(sqlStatements(migration).map(s => db.prepare(s)));
+  await db.batch(sqlStatements(deliveryMigration).map(s => db.prepare(s)));
   async function request(path, method = 'GET', body, cookie) {
     const r = await mf.dispatchFetch(origin + path, {
       method,
@@ -77,7 +80,8 @@ test('checkout and coupon regression tests with local Workers/D1', async t => {
     const quote = await app.request('/api/quote', 'POST', { items: payload().items, coupon: '٢٠٢٦' });
     assert.equal(quote.status, 200);
     assert.equal(quote.json.quote.coupon_discount, 1000);
-    assert.equal(quote.json.quote.total, 9000);
+    assert.equal(quote.json.quote.total, 15000);
+    assert.equal(quote.json.quote.delivery_fee, 6000);
     assert.equal((await app.db.prepare("SELECT uses FROM coupons WHERE code='2026'").first()).uses, 0);
   });
 
@@ -126,7 +130,7 @@ test('checkout and coupon regression tests with local Workers/D1', async t => {
     const quote = await app.request('/api/quote', 'POST', { items: payload().items, coupon: 'BOTH' });
     assert.equal(quote.json.quote.product_discount, 2000);
     assert.equal(quote.json.quote.coupon_discount, 800);
-    assert.equal(quote.json.quote.total, 7200);
+    assert.equal(quote.json.quote.total, 13200);
   });
 
   await t.test('a complete WhatsApp receipt exists on initial response and every retry', async () => {
@@ -144,7 +148,8 @@ test('checkout and coupon regression tests with local Workers/D1', async t => {
     assert.equal(link.hostname, 'wa.me');
     assert.equal(link.pathname, '/9647706050050');
     assert.match(link.searchParams.get('text'), /منتج اختبار × 1/);
-    assert.match(link.searchParams.get('text'), /9000 د.ع/);
+    assert.match(link.searchParams.get('text'), /15000 د.ع/);
+    assert.match(link.searchParams.get('text'), /أجور التوصيل: 6000 د.ع/);
     assert.match(link.searchParams.get('text'), /الكوبون: ONCE/);
     assert.equal(first.json.delivery_status, 'unconfirmed');
     assert.equal((await app.db.prepare('SELECT COUNT(*) AS n FROM orders').first()).n, 1);
@@ -178,7 +183,7 @@ test('checkout and coupon regression tests with local Workers/D1', async t => {
     assert.equal(receipt.coupon_code, null);
     assert.equal(receipt.coupon_code_snapshot, 'DEL1');
     assert.equal(receipt.coupon_discount, 1000);
-    assert.equal(receipt.total, 9000);
+    assert.equal(receipt.total, 15000);
     const retry = await app.request('/api/order', 'POST', body);
     assert.equal(retry.status, 200);
     assert.equal(retry.json.whatsapp_url, first.json.whatsapp_url);
@@ -192,6 +197,53 @@ test('checkout and coupon regression tests with local Workers/D1', async t => {
     assert.equal(result.status, 400);
     assert.equal((await app.db.prepare('SELECT COUNT(*) AS n FROM orders').first()).n, 0);
     assert.equal((await app.db.prepare('SELECT COUNT(*) AS n FROM coupon_redemptions').first()).n, 0);
+  });
+
+  await t.test('delivery is charged exactly once for every province and cannot be discounted', async () => {
+    await app.reset();
+    await app.coupon('FREE', {value:100});
+    const quote=await app.request('/api/quote','POST',{items:payload().items,coupon:'FREE',delivery_fee:0,total:0});
+    assert.equal(quote.json.quote.delivery_fee,6000);
+    assert.equal(quote.json.quote.total,6000);
+    for(const province of ['كربلاء','بغداد','أربيل','البصرة']){
+      const order=await app.request('/api/order','POST',payload({province,delivery_fee:0}));
+      assert.equal(order.json.total,16000);
+      assert.equal(order.json.delivery_fee,6000);
+    }
+  });
+
+  await t.test('product deletion removes catalog entries, keeps historical invoices and adjusts scoped coupons', async () => {
+    await app.reset();
+    await app.coupon('ONLY',{scope:'products',scope_ids:['test-product']});
+    const placed=await app.request('/api/order','POST',payload());
+    assert.equal((await app.request('/api/admin/products/test-product','DELETE',{confirm_id:'test-product'})).status,401);
+    assert.equal((await app.admin('/products/test-product','DELETE',{confirm_id:'wrong'})).status,400);
+    assert.equal((await app.admin('/products/test-product','DELETE',{confirm_id:'test-product'})).status,200);
+    assert.equal((await app.request('/api/catalog')).json.products.length,0);
+    assert.equal((await app.request('/api/order','POST',payload())).status,400);
+    const coupon=await app.db.prepare("SELECT * FROM coupons WHERE code='ONLY'").first();
+    assert.equal(coupon.enabled,0);
+    assert.equal(coupon.scope_ids,'[]');
+    assert.equal((await app.request('/api/admin/orders/'+placed.json.order_id+'/invoice')).status,401);
+    const invoice=await app.admin('/orders/'+placed.json.order_id+'/invoice');
+    assert.equal(invoice.status,200);
+    assert.equal(invoice.json.order.items[0].name,'منتج اختبار');
+    assert.equal(invoice.json.order.total,16000);
+    assert.equal(invoice.json.order.delivery_fee,6000);
+    assert.equal('idempotency_key' in invoice.json.order,false);
+    assert.equal((await app.admin('/orders/'+placed.json.order_id,'PATCH',{status:'fulfilled'})).status,200);
+    assert.equal((await app.admin('/orders/'+placed.json.order_id+'/invoice')).json.order.status,'fulfilled');
+  });
+
+  await t.test('historical orders and receipts retain their original delivery fee and total',async()=>{
+    await app.reset();
+    const body=payload(),placed=await app.request('/api/order','POST',body);
+    await app.db.prepare('UPDATE orders SET delivery_fee=0,total=10000 WHERE id=?').bind(placed.json.order_id).run();
+    const retry=await app.request('/api/order','POST',body);
+    assert.equal(retry.json.total,10000);
+    assert.equal(retry.json.delivery_fee,0);
+    const invoice=await app.admin('/orders/'+placed.json.order_id+'/invoice');
+    assert.equal(invoice.json.order.total,10000);
   });
 });
 
@@ -210,12 +262,12 @@ test('admin dates, deletion cancel and pending order labels', async () => {
   const dom = new JSDOM(adminHTML, { url: origin, runScripts: 'outside-only' });
   const w = dom.window;
   const calls = [];
-  const state = { products: [], coupons: [{ code: '2026', starts_at: '2026-10-25 12:59:00', ends_at: null }], orders: [{ id: 'local-order', status: 'new' }], site: {} };
+  const state = { products: [{id:'test-product',name:'منتج اختبار',price:1000,sale_price:null,active:1}], coupons: [{ code: '2026', starts_at: '2026-10-25 12:59:00', ends_at: null }], orders: [{ id: 'local-order', status: 'new' },{id:'completed-order',status:'fulfilled'}], site: {} };
   w.fetch = async (path, options) => { calls.push({ path, options }); return { ok: true, json: async () => state }; };
   w.confirm = () => false;
   const context = dom.getInternalVMContext();
   const evaluate = script => vm.runInContext(script, context);
-  evaluate(w.document.querySelector('script').textContent);
+  evaluate(w.document.querySelector('script:not([src])').textContent);
   await new Promise(resolve => setImmediate(resolve));
   assert.equal(evaluate("dt('2026-10-25 12:59:00')"), '2026-10-25T15:59');
   assert.equal(evaluate("utcCouponDate('2026-10-25T15:59')"), '2026-10-25T12:59:00.000Z');
@@ -227,6 +279,13 @@ test('admin dates, deletion cancel and pending order labels', async () => {
   evaluate("state.tab='orders';render()");
   assert.match(w.document.querySelector('#pane').textContent, /بانتظار تأكيد التاجر/);
   assert.doesNotMatch(w.document.querySelector('#pane').textContent, /\bnew\b/);
+  assert.equal(w.document.querySelector('.status-badge.fulfilled').textContent,'✓ مكتمل');
+  assert.ok(w.document.querySelector('[data-invoice="completed-order"]'));
+  evaluate("state.tab='products';render()");
+  const deleteProduct=w.document.querySelector('[data-delete-product="test-product"]');
+  assert.ok(deleteProduct);
+  await deleteProduct.onclick();
+  assert.equal(calls.filter(x=>x.options?.method==='DELETE').length,0);
   assert.equal(w.document.querySelector('.top a').href, 'https://alalqami.pages.dev/');
   dom.window.close();
 });
