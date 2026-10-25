@@ -1,0 +1,19 @@
+{
+  "$schema": "../node_modules/wrangler/config-schema.json",
+  "name": "alalqami-store-api",
+  "main": "worker.mjs",
+  "compatibility_date": "2026-10-25",
+  "keep_vars": true,
+  "secrets": { "required": ["ADMIN_PASSWORD", "AUTH_KEY"] },
+  "vars": {
+    "SHOP_WHATSAPP": "9647706050050"
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "alalqami-store-db",
+      "database_id": "5f724f79-57e8-44c3-bf2f-f833597d3d83"
+    }
+  ],
+  "observability": { "enabled": true }
+}
