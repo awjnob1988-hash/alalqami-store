@@ -2,7 +2,7 @@ import { jsPDF } from 'jspdf';
 import font from './fonts/Amiri-Regular.ttf';
 
 const colors={navy:'#102d56',cyan:'#0488b4',ink:'#173759',muted:'#6c82a2',line:'#dce6f5',light:'#f2f7fc',green:'#14754d'};
-const statuses={new:'بانتظار تأكيد التاجر',confirmed:'مؤكد من التاجر',fulfilled:'مكتمل',cancelled:'ملغي'};
+const statuses={new:'بانتظار تأكيد التاجر',confirmed:'مؤكد من التاجر',fulfilled:'مكتمل',cancelled:'ملغي',rejected:'مرفوض'};
 const money=value=>Number(value||0).toLocaleString('en-US')+' د.ع';
 
 export function createInvoice(order){

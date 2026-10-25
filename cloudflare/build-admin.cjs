@@ -1,0 +1,12 @@
+const fs=require('node:fs');
+const path=require('node:path');
+const file=path.join(__dirname,'worker.mjs');
+const source=fs.readFileSync(file,'utf8');
+const end=source.indexOf('\n');
+const line=source.slice(0,end);
+const html=JSON.parse(line.slice('const ADMIN_HTML = '.length).replace(/;$/,''));
+const start='/* ALQAMI_REPORTS_START */',stop='/* ALQAMI_REPORTS_END */';
+if(html.split(start).length!==2||html.split(stop).length!==2)throw Error('Expected one reports source region');
+const code=fs.readFileSync(path.join(__dirname,'reports-admin.js'),'utf8');
+const result=html.slice(0,html.indexOf(start))+start+'\n'+code+'\n'+html.slice(html.indexOf(stop));
+fs.writeFileSync(file,'const ADMIN_HTML = '+JSON.stringify(result)+';'+source.slice(end));

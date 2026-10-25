@@ -1,2 +1,3 @@
 import {download} from './invoice.mjs';
-window.AlqamiInvoice={download};
+import {downloadReport} from './report.mjs';
+window.AlqamiInvoice={download,downloadReport};
