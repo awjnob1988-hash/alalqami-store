@@ -10,7 +10,7 @@ if (path.dirname(output) !== root || path.basename(output) !== 'dist-pages') thr
 fs.rmSync(output, { recursive: true, force: true });
 fs.mkdirSync(output, { recursive: true });
 fs.writeFileSync(path.join(output, 'index.html'), source.replace(api, 'const ALQAMI_API="";')
-  .replace('</head>', '<link rel="canonical" href="https://alalqami.pages.dev/">\n</head>'));
+  .replace('</head>', '<link rel="canonical" href="https://alalqami.com/">\n</head>'));
 fs.cpSync(path.join(root, 'assets', 'catalog'), path.join(output, 'assets', 'catalog'), { recursive: true });
 fs.copyFileSync(path.join(__dirname, 'pages-public-api.mjs'), path.join(output, '_worker.js'));
 fs.writeFileSync(path.join(output, '_routes.json'), JSON.stringify({ version: 1, include: ['/api/*'], exclude: [] }));
